@@ -134,6 +134,7 @@ int get_current_task(MYSQL *mysqldb)
     int i;
     char sql_cmd[2048];
     list<calc_task> task_require;
+    calc_task ttask;
     MYSQL_RES *sql_result;
     MYSQL_ROW *sql_result_row;
     MYSQL_FIELD *sql_result_field;
@@ -153,18 +154,26 @@ int get_current_task(MYSQL *mysqldb)
             mysql_query(mysqldb,sql_cmd);
             sql_result=mysql_store_result(mysqldb);
             sql_result_row=mysql_fetch_row(sql_result);
+<<<<<<< HEAD
             ///...
+=======
+            sscanf(sql_result_row[1],"%ld%ld%ld%ld",&(ttask.serial),&(ttask.user),&ttask.cores);//this has some problem
+            ttask.start();
+            task_list.push_back(task);
+            mysql_free_result(sql_result);
+>>>>>>> b57aa79769ca4722767e3d070689c19264f2735d
         }
         //有机会的话重构这一段
-        for(it1=task_require.begin();it1!=task_require.end();it1++)
-        {
-            it1->start();
-            task_list.push_back(*it1);
-        }
-        task_require.clear();
+        //for(it1=task_require.begin();it1!=task_require.end();it1++)
+       // {
+        //    it1->start();
+       //     task_list.push_back(*it1);
+       // }
+       // task_require.clear();
         //--
     if(totalcores<cores_available)
     {
+<<<<<<< HEAD
         while(totalcores<cores_available)
         {
                 //int task_added=0;
@@ -185,6 +194,25 @@ int get_current_task(MYSQL *mysqldb)
                 task_require.clear();
                 //--
         }
+=======
+            while(totalcores<cores_available)
+            {
+                sprintf(sql_cmd,"SELECT TOP 10 * FROM task_list where user=%ld and cancel_state=0 and running_state=%ld",i,MTASK_WAITTING);
+                mysql_query(mysqldb,sql_cmd);
+                sql_result=mysql_store_result(mysqldb);
+                int i;
+                while(sql_result_row=mysql_fetch_row(sql_result)&&totalcores<cores_available)
+                {
+                    sscanf(sql_result_ro2w[1],"%ld%ld%ld%ld",&(ttask.serial),&(ttask.user),&ttask.cores);//this has some problem;
+                    ttask.start();
+                    task_list.push_back(task);
+                }
+                mysql_free_result(sql_result);
+        //如有空余资源，首先轮询所有可能任务并加入
+            //有机会的话重构这一段
+            }
+            //--
+>>>>>>> b57aa79769ca4722767e3d070689c19264f2735d
         //如发现无任务可加入，检查是否需要缩减资源开销
         if(cores_available/2>totalcores)
         {
@@ -210,7 +238,7 @@ int check_if_finished(MYSQL &mysqldb)
    // tpp=&task_list_header;//header(the first guy in the list) will not storage the real task. because it sould not be changed.
    // while(tp=enum_task(tpp))
     {
-        sprintf(s,"/tmp/nutd/%ld.finish",it1->serial);
+        sprintf(s,"//tmp//nutd//%ld.finish",it1->serial);
         if(t=fopen(s,"r"))
             
         {
@@ -282,3 +310,4 @@ int main(int argc, char **argv)
    // printf("HelloWorld!");
     return 0;
 }
+
