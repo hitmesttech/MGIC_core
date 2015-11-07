@@ -154,14 +154,11 @@ int get_current_task(MYSQL *mysqldb)
             mysql_query(mysqldb,sql_cmd);
             sql_result=mysql_store_result(mysqldb);
             sql_result_row=mysql_fetch_row(sql_result);
-<<<<<<< HEAD
             ///...
-=======
             sscanf(sql_result_row[1],"%ld%ld%ld%ld",&(ttask.serial),&(ttask.user),&ttask.cores);//this has some problem
             ttask.start();
             task_list.push_back(task);
             mysql_free_result(sql_result);
->>>>>>> b57aa79769ca4722767e3d070689c19264f2735d
         }
         //有机会的话重构这一段
         //for(it1=task_require.begin();it1!=task_require.end();it1++)
@@ -173,7 +170,6 @@ int get_current_task(MYSQL *mysqldb)
         //--
     if(totalcores<cores_available)
     {
-<<<<<<< HEAD
         while(totalcores<cores_available)
         {
                 //int task_added=0;
@@ -194,7 +190,6 @@ int get_current_task(MYSQL *mysqldb)
                 task_require.clear();
                 //--
         }
-=======
             while(totalcores<cores_available)
             {
                 sprintf(sql_cmd,"SELECT TOP 10 * FROM task_list where user=%ld and cancel_state=0 and running_state=%ld",i,MTASK_WAITTING);
@@ -212,7 +207,6 @@ int get_current_task(MYSQL *mysqldb)
             //有机会的话重构这一段
             }
             //--
->>>>>>> b57aa79769ca4722767e3d070689c19264f2735d
         //如发现无任务可加入，检查是否需要缩减资源开销
         if(cores_available/2>totalcores)
         {
