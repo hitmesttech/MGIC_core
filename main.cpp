@@ -240,7 +240,7 @@ int check_if_finished(MYSQL &mysqldb)
    // tpp=&task_list_header;//header(the first guy in the list) will not storage the real task. because it sould not be changed.
    // while(tp=enum_task(tpp))
     {
-        sprintf(s,"//tmp//nutd//%ld.finish",it1->serial);
+        sprintf(s,"/tmp/nutd/%ld.finish",it1->serial);
         if(t=fopen(s,"r"))
             
         {
