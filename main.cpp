@@ -74,7 +74,7 @@ public:
         char cmd[1024];
         nutdf=popen("/usr/bin/nut","w");
         //submit message to the nut deamon.
-        fprintf(nutdf,"%ld%ld%ld%ld\n",this->serial,this->cores,this->type);
+        fprintf(nutdf,"%ld%ld%ld%ld\n",this->type,this->cores,this->serial);
         fflush(nutdf);
         //
        // this->start_time=time(0);
@@ -156,6 +156,7 @@ int get_current_task(MYSQL *mysqldb)
             sql_result_row=mysql_fetch_row(sql_result);
             ///...
             sscanf(sql_result_row[1],"%ld%ld%ld%ld",&(ttask.serial),&(ttask.user),&ttask.cores);//this has some problem
+            ttask.type=1;
             ttask.start();
             task_list.push_back(task);
             mysql_free_result(sql_result);
@@ -179,13 +180,20 @@ int get_current_task(MYSQL *mysqldb)
                 mysql_query(mysqldb,sql_cmd);
                 sql_result=mysql_store_result(mysqldb);
                 sql_result_row=mysql_fetch_row(sql_result);
+                
+                sscanf(sql_result_row[1],"%ld%ld%ld%ld",&(ttask.serial),&(ttask.user),&ttask.cores);//this has some problem
+                ttask.type=1;
+                ttask.start();
+                task_list.push_back(task);
+                mysql_free_result(sql_result);
+                
                 //如有空余资源，首先轮询所有可能任务并加入
                 //有机会的话重构这一段
-                for(it1=task_require.begin();it1!=task_require.end();it1++)
+               // for(it1=task_require.begin();it1!=task_require.end();it1++)
                 {
-                    it1->start();
-                    task_list.push_back(*it1);
-                    task_added++;
+                  //  it1->start();
+                   // task_list.push_back(*it1);
+                   // task_added++;
                 }
                 task_require.clear();
                 //--
