@@ -22,7 +22,9 @@ std::list<calc_task>::iterator it1;
 #define MTASK_RUNNING   1
 #define MTASK_KILLED    3
 #define MTASK_ABORTED  -1
-#define MTASK_FINISHED  2 
+#define MTASK_FINISHED  2
+#define MTASK_AHEADED   5
+#define MTASK_HANGUP    6
 
 #define MPROG_RUN       1
 #define MPROG_KILL      2
@@ -42,6 +44,7 @@ class calc_task{
 public:
     int status;//构造时设为MTASK_WAITTING
     int serial;
+    int task_mark;
     //int predict_time;
     int cores;
     int time;
@@ -145,10 +148,12 @@ int get_current_task(MYSQL *mysqldb)
         {
             if(user_list[i])
                 continue;
-            sprintf(sql_cmd,"SELECT TOP 0 * FROM task_list where user=%ld and cancel_state=0 and running_state=%ld",i,MTASK_WAITTING);
+            sprintf(sql_cmd,"SELECT TOP 0 * FROM task_list where user=%ld\
+ and cancel_state=0 and (running_state=%ld or running_state=%ld)",i,MTASK_WAITTING,MTASK_HANGUP);
             mysql_query(mysqldb,sql_cmd);
             sql_result=mysql_store_result(mysqldb);
-            sql_result_row=mysql_fetch_row(sql_result)
+            sql_result_row=mysql_fetch_row(sql_result);
+            ///...
         }
         //有机会的话重构这一段
         for(it1=task_require.begin();it1!=task_require.end();it1++)
@@ -160,18 +165,32 @@ int get_current_task(MYSQL *mysqldb)
         //--
     if(totalcores<cores_available)
     {
-        //如有空余资源，首先轮询所有可能任务并加入
-            //有机会的话重构这一段
-            for(it1=task_require.begin();it1!=task_require.end();it1++)
-            {
-                it1->start();
-                task_list.push_back(*it1);
-            }
-            task_require.clear();
-            //--
+        while(totalcores<cores_available)
+        {
+                //int task_added=0;
+                sprintf(sql_cmd,"SELECT * FROM task_list where\
+ and cancel_state=0 and (running_state=%ld or running_state=%ld)\
+ and cores<%ld",i,MTASK_WAITTING,MTASK_HANGUP,cores_available-totalcores);
+                mysql_query(mysqldb,sql_cmd);
+                sql_result=mysql_store_result(mysqldb);
+                sql_result_row=mysql_fetch_row(sql_result);
+                //如有空余资源，首先轮询所有可能任务并加入
+                //有机会的话重构这一段
+                for(it1=task_require.begin();it1!=task_require.end();it1++)
+                {
+                    it1->start();
+                    task_list.push_back(*it1);
+                    task_added++;
+                }
+                task_require.clear();
+                //--
+        }
         //如发现无任务可加入，检查是否需要缩减资源开销
-            if(cores_available/2>totalcores)
-                reduce();
+        if(cores_available/2>totalcores)
+        {
+            reduce();
+            break;
+        }
     }
     
 }
@@ -182,7 +201,7 @@ int check_if_finished(MYSQL &mysqldb)
 {
    
     //task_list *tp,*tpp;
-   char s[2048];
+   char s[2048],cmd[2048];
     FILE *t;
     int i,finish_type,leaf=0;
     //std::list<calc_task>::iterator it2;   
@@ -211,6 +230,26 @@ int check_if_finished(MYSQL &mysqldb)
     }
     
     //停止所有waitting_to_be_cancelled 任务。首先检测任务是否已经开始，是否已经结束，然后...
+    //wait_to_be_cancelled 与运行状态属于两个字段，不阻塞
+    //
+    //查出所有已经运行了的需要取消的任务
+     sprintf(sql_cmd,"SELECT * FROM task_list where\
+ and cancel_state=1 and running_state=%ld or running_state=%ld)"
+ ,i,MTASK_WAITTING,MTASK_HANGUP);
+    mysql_query(mysqldb,sql_cmd);
+    sql_result=mysql_store_result(mysqldb);
+    sql_result_row=mysql_fetch_row(sql_result);
+    ///...
+    
+    //查出所有未运行需要取消的任务
+    sprintf(sql_cmd,"SELECT * FROM task_list where\
+ and cancel_state=1 and running_state=%ld or running_state=%ld)"
+ ,i,MTASK_WAITTING,MTASK_HANGUP);
+    mysql_query(mysqldb,sql_cmd);
+    sql_result=mysql_store_result(mysqldb);
+    sql_result_row=mysql_fetch_row(sql_result);
+    //...
+    
     return leaf;
 }
 
